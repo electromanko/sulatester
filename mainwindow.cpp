@@ -52,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
     createMenus();
+
 }
 
 MainWindow::~MainWindow()

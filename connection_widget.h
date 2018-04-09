@@ -20,6 +20,7 @@ public:
     QLineEdit *ipAddrLineEdit;
     QLineEdit *portLineEdit;
 
+    QString selfIpAddress;
 private:
     bool connected;
     QTcpSocket *tcpSocket;
