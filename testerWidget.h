@@ -4,6 +4,7 @@
 #include <QBuffer>
 #include <QComboBox>
 #include <QDialogButtonBox>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QTextEdit>
 #include <QWidget>
@@ -14,20 +15,25 @@ class TesterWidget : public QWidget
 public:
     explicit TesterWidget(QWidget *parent = nullptr);
     QComboBox *testCombo;
+    QProgressBar *sendProgressBar;
+    QProgressBar *receiveProgressBar;
     QPushButton *startPushButton;
     QPushButton *stopPushButton;
     QDialogButtonBox *testButtonBox;
     QTextEdit *testTextEdit;
 private:
     int testNum;
+    QTimer *timeoutTimer;
+    QTime *measureTimer;
     QBuffer cotRecvBuffer;
     QBuffer rtaRecvBuffer;
-    int cotSendDataCounter;
-    int cotRecvDataCounter;
+    QByteArray cotSendData;
+    QByteArray cotRecvData;
     int rtaSendDataCounter;
+    bool testRuned=false;
     void startTest(int testNum);
     void recvTest(int num, QByteArray data);
-    void stopTest();
+    long int compareData(QByteArray &send, QByteArray &recv);
 
 signals:
     void rtaDataSend(QByteArray data);
@@ -38,6 +44,7 @@ public slots:
 private slots:
     void pushStart();
     void pushStop();
+    void stopTest();
 };
 
 #endif // TESTERWIDGET_H

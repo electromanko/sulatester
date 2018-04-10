@@ -16,8 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     QGroupBox *rtaGroupBox = new QGroupBox(tr("RTA"));
     QVBoxLayout *rtaLayout = new QVBoxLayout();
 
-    CotConnectionWidget = new ConnectionWidget("192.168.0.189",8899);
-    RtaConnectionWidget = new ConnectionWidget("192.168.0.190",8899);
+    CotConnectionWidget = new ConnectionWidget("192.168.0.13",8899);
+    RtaConnectionWidget = new ConnectionWidget("192.168.0.14",8899);
     testerWidget = new TesterWidget();
     // Loop
     connect(RtaConnectionWidget,SIGNAL(dataReceive(QByteArray)),
@@ -35,8 +35,12 @@ MainWindow::MainWindow(QWidget *parent)
                 testerWidget,SLOT(cotDataReceive(QByteArray)));
 
     cotLayout->addWidget(CotConnectionWidget);
+    cotLayout->setSpacing(0);
+    cotLayout->setMargin(0);
     cotGroupBox->setLayout(cotLayout);
     rtaLayout->addWidget(RtaConnectionWidget);
+    rtaLayout->setSpacing(0);
+    rtaLayout->setMargin(0);
     rtaGroupBox->setLayout(rtaLayout);
 
     vLayout->addWidget(cotGroupBox);
@@ -44,9 +48,12 @@ MainWindow::MainWindow(QWidget *parent)
     /*vLayout->addWidget(CotConnectionWidget);
     vLayout->addWidget(RtaConnectionWidget);*/
     vLayout->addStretch();
+    vLayout->setSpacing(0);
+    vLayout->setMargin(0);
     mainLayout->addLayout(vLayout);
     mainLayout->addWidget(testerWidget);
-
+    mainLayout->setSpacing(0);
+    mainLayout->setMargin(2);
     mainWidget->setLayout(mainLayout);
     setCentralWidget(mainWidget);
 
