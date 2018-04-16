@@ -19,13 +19,18 @@ public:
     QDialogButtonBox *connectButtonBox;
     QLineEdit *ipAddrLineEdit;
     QLineEdit *portLineEdit;
-
     QString selfIpAddress;
-private:
-    bool connected;
+    bool isConnected;
     QTcpSocket *tcpSocket;
+    QHostAddress getIpAddress();
+    int getPort();
+    void tcpFlush();
+private:
+
 signals:
     void dataReceive(QByteArray data);
+    void connected();
+    void disconnected();
 public slots:
     void dataSend(QByteArray data);
 private slots:

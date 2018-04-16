@@ -1,9 +1,11 @@
 #include "mainwindow.h"
 #include "connection_widget.h"
 #include "testerWidget.h"
+#include "configConnectionWidget.h"
 
 #include <QtWidgets>
 #include <QHBoxLayout>
+#include <QHostAddress>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     CotConnectionWidget = new ConnectionWidget("192.168.0.13",8899);
     RtaConnectionWidget = new ConnectionWidget("192.168.0.14",8899);
+
+    ModemConnectionWidget = new ConfigConnectionWidget();
     testerWidget = new TesterWidget();
     // Loop
     connect(RtaConnectionWidget,SIGNAL(dataReceive(QByteArray)),
@@ -33,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
             CotConnectionWidget,SLOT(dataSend(QByteArray)));
     connect(CotConnectionWidget,SIGNAL(dataReceive(QByteArray)),
                 testerWidget,SLOT(cotDataReceive(QByteArray)));
+    connect(CotConnectionWidget,SIGNAL(connected()),
+                this,SLOT(startConf()));
 
     cotLayout->addWidget(CotConnectionWidget);
     cotLayout->setSpacing(0);
@@ -45,9 +51,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     vLayout->addWidget(cotGroupBox);
     vLayout->addWidget(rtaGroupBox);
+    vLayout->addWidget(ModemConnectionWidget);
     /*vLayout->addWidget(CotConnectionWidget);
     vLayout->addWidget(RtaConnectionWidget);*/
-    vLayout->addStretch();
+    //vLayout->addStretch();
     vLayout->setSpacing(0);
     vLayout->setMargin(0);
     mainLayout->addLayout(vLayout);
@@ -65,6 +72,11 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
 
+}
+
+void MainWindow::startConf()
+{
+    ModemConnectionWidget->tcpConnect(CotConnectionWidget->getIpAddress(),CotConnectionWidget->getPort()-1);
 }
 
 void MainWindow::createActions(){

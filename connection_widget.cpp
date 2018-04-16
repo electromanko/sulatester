@@ -8,7 +8,7 @@
 
 ConnectionWidget::ConnectionWidget(QString addr, int port, QWidget *parent) : QWidget(parent)
 {
-    connected=false;
+    isConnected=false;
     ipAddrLineEdit = new QLineEdit(addr);
     ipAddrLineEdit->setMaxLength(16);
     ipAddrLineEdit->setMaximumWidth(100);
@@ -57,32 +57,49 @@ ConnectionWidget::~ConnectionWidget()
 
 }
 
+QHostAddress ConnectionWidget::getIpAddress()
+{
+    return tcpSocket->peerAddress();
+}
+
+int ConnectionWidget::getPort()
+{
+    return tcpSocket->peerPort();
+}
+
+void ConnectionWidget::tcpFlush()
+{
+    tcpSocket->flush();
+}
+
 void ConnectionWidget::dataSend(QByteArray data)
 {
-    if (connected==true) tcpSocket->write(data);
+    if (isConnected==true) tcpSocket->write(data);
 }
 
 void ConnectionWidget::tcpConnect()
 {
-    connected=true;
+    isConnected=true;
     connectPushButton->setEnabled(false);
     disconnectPushButton->setEnabled(true);
     ipAddrLineEdit->setEnabled(false);
     portLineEdit->setEnabled(false);
+    emit connected();
 }
 
 void ConnectionWidget::tcpDisconnect()
 {
-    connected=false;
+    isConnected=false;
     connectPushButton->setEnabled(true);
     disconnectPushButton->setEnabled(false);
     ipAddrLineEdit->setEnabled(true);
     portLineEdit->setEnabled(true);
+    emit disconnected();
 }
 
 void ConnectionWidget::tcpError(QAbstractSocket::SocketError error)
 {
-    connected=false;
+    isConnected=false;
     connectPushButton->setEnabled(true);
     disconnectPushButton->setEnabled(false);
     ipAddrLineEdit->setEnabled(true);

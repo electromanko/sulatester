@@ -11,7 +11,9 @@
 TesterWidget::TesterWidget(QWidget *parent) : QWidget(parent)
 {
     testCombo = new QComboBox();
+    seqCombo  = new QComboBox();
     testCombo->setEditable(false);
+    seqCombo->setEditable(false);
     //testCombo->addItem(QString(""));
     testCombo->addItem(QString("Send->Receive 1B"),QVariant(1));
     testCombo->addItem(QString("Send->Receive 127B"),QVariant(127));
@@ -23,6 +25,11 @@ TesterWidget::TesterWidget(QWidget *parent) : QWidget(parent)
     testCombo->addItem(QString("Send->Receive 10MB"),QVariant(10000000));
     testCombo->addItem(QString("Send->Receive 100MB"),QVariant(100000000));
     //testCombo->lineEdit()->setCursorPosition(0);
+    seqCombo->addItem(QString("Random"),QVariant(1));
+    seqCombo->addItem(QString("0xAA"),QVariant(2));
+    seqCombo->addItem(QString("0x00"),QVariant(3));
+    seqCombo->addItem(QString("0xFF"),QVariant(4));
+    seqCombo->addItem(QString("0x55"),QVariant(5));
 
     testButtonBox = new QDialogButtonBox();
     startPushButton = testButtonBox->addButton(tr("Start"),QDialogButtonBox::AcceptRole);
@@ -45,7 +52,10 @@ TesterWidget::TesterWidget(QWidget *parent) : QWidget(parent)
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(testCombo);
-    mainLayout->addWidget(testButtonBox);
+    QLayout *chlayout= new QHBoxLayout();
+        chlayout->addWidget(seqCombo);
+        chlayout->addWidget(testButtonBox);
+    mainLayout->addLayout(chlayout);
     QLayout *shlayout= new QHBoxLayout();
         shlayout->addWidget(new QLabel(tr("Sended:")));
         shlayout->addWidget(sendProgressBar);
@@ -90,6 +100,7 @@ void TesterWidget::startTest(int num)
         testNum=num;
         startPushButton->setEnabled(false);
         testCombo->setEnabled(false);
+        seqCombo->setEnabled(false);
         sendProgressBar->setMaximum(testNum);
         receiveProgressBar->setMaximum(testNum);
         testRuned=true;
@@ -98,9 +109,21 @@ void TesterWidget::startTest(int num)
         cotRecvData.clear();
         receiveProgressBar->setValue(cotRecvData.size());
         sendProgressBar->setValue(cotSendData.size());
+        int mode = seqCombo->currentData().toInt();
 
         while (num--){
-          cotSendData.append((unsigned char )(rand() % 256));
+            if(mode == 1){
+               cotSendData.append((unsigned char)(rand() % 256));
+            } else if (mode == 2){
+                cotSendData.append((char)0xaa);
+            } else if (mode == 3){
+                cotSendData.append((char)0);
+            } else if (mode == 4){
+                cotSendData.append((char)0xff);
+            } else if (mode == 5){
+                cotSendData.append((char)0x55);
+            }
+
           //QThread::msleep(100);
           /*testTextEdit->moveCursor (QTextCursor::End);
           testTextEdit->insertPlainText(QString(QChar(u)));
@@ -124,7 +147,7 @@ void TesterWidget::recvTest(int num, QByteArray data)
     if (testRuned){
         cotRecvData.append(data);
         receiveProgressBar->setValue(cotRecvData.size());
-        if (cotSendData.size()==cotRecvData.size()) {
+        if (cotSendData.size()<=cotRecvData.size()) {
             timeoutTimer->stop();
             stopTest();
         } else {
@@ -148,6 +171,7 @@ void TesterWidget::stopTest()
 {
     int testTime= measureTimer->elapsed();
     double speed = (double)(cotRecvData.size())/(double)(testTime?testTime:1);
+    int first_err_byte_num=0;
     testRuned=false;
     if (cotSendData.size()==cotRecvData.size()){
         testTextEdit->append(QString(tr("%1 Тест успешно завершён…"))
@@ -165,14 +189,16 @@ void TesterWidget::stopTest()
 
     testTextEdit->append(QString(tr("      Время приёма: %1 мс\n"\
                                     "      Средняя скорость: %2 КБ/с (%3 Кбит/c)\n"\
-                                    "      Ошибок: %4 бит"))
+                                    "      Ошибок: %4 бит\n"))
                          .arg(testTime)
                          .arg(speed)
                          .arg(speed*8)
-                         .arg(compareData(cotSendData,cotRecvData))
+                         .arg(compareData(cotSendData,cotRecvData,&first_err_byte_num))
                          );
+    testTextEdit->append(QString(tr("      Ошибка с: %1 байта")).arg(first_err_byte_num));
 
     testCombo->setEnabled(true);
+    seqCombo->setEnabled(true);
     startPushButton->setEnabled(true);
 }
 
@@ -186,13 +212,18 @@ void TesterWidget::cotDataReceive(QByteArray data)
     recvTest(testNum, data);
 }
 
-long int TesterWidget::compareData(QByteArray &send, QByteArray &recv){
+long int TesterWidget::compareData(QByteArray &send, QByteArray &recv, int *first_err_byte_num){
     long int cnt_err=0;
     int num = recv.size()<send.size()? recv.size():send.size();
+    int first_err=0;
     while (num--){
         for (int i=0; i<8;i++){
-           if (((send[num]>>i)&0x01) != ((recv[num]>>i)&0x01)) cnt_err++;
+           if (((send[num]>>i)&0x01) != ((recv[num]>>i)&0x01)) {
+               cnt_err++;
+               if(first_err==0) first_err=num;
+           }
         }
     }
+    if (first_err_byte_num!=NULL) *first_err_byte_num=first_err;
     return cnt_err;
 }

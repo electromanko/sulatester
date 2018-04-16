@@ -1,6 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "configConnectionWidget.h"
+#include "connection_widget.h"
+
 #include <QMainWindow>
 #include <QMenu>
 
@@ -13,9 +16,12 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+public slots:
+    void startConf();
 private:
-    QWidget *CotConnectionWidget;
-    QWidget *RtaConnectionWidget;
+    ConnectionWidget *CotConnectionWidget;
+    ConnectionWidget *RtaConnectionWidget;
+    ConfigConnectionWidget  *ModemConnectionWidget;
     QWidget *testerWidget;
 
     QMenu *fileMenu;

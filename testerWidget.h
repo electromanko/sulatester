@@ -15,6 +15,7 @@ class TesterWidget : public QWidget
 public:
     explicit TesterWidget(QWidget *parent = nullptr);
     QComboBox *testCombo;
+    QComboBox *seqCombo;
     QProgressBar *sendProgressBar;
     QProgressBar *receiveProgressBar;
     QPushButton *startPushButton;
@@ -33,7 +34,7 @@ private:
     bool testRuned=false;
     void startTest(int testNum);
     void recvTest(int num, QByteArray data);
-    long int compareData(QByteArray &send, QByteArray &recv);
+    long int compareData(QByteArray &send, QByteArray &recv, int *first_err_byte_num);
 
 signals:
     void rtaDataSend(QByteArray data);
