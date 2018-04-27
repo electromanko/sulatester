@@ -28,10 +28,12 @@ SOURCES += \
         mainwindow.cpp \
     connection_widget.cpp \
     testerWidget.cpp \
-    configConnectionWidget.cpp
+    configConnectionWidget.cpp \
+    depthWidget.cpp
 
 HEADERS += \
         mainwindow.h \
     connection_widget.h \
     testerWidget.h \
-    configConnectionWidget.h
+    configConnectionWidget.h \
+    depthWidget.h

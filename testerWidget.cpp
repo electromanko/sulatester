@@ -1,6 +1,7 @@
 #include "testerWidget.h"
 
 #include <QDateTime>
+#include <QFile>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -189,7 +190,7 @@ void TesterWidget::stopTest()
 
     testTextEdit->append(QString(tr("      Время приёма: %1 мс\n"\
                                     "      Средняя скорость: %2 КБ/с (%3 Кбит/c)\n"\
-                                    "      Ошибок: %4 бит\n"))
+                                    "      Ошибок: %4 бит"))
                          .arg(testTime)
                          .arg(speed)
                          .arg(speed*8)
@@ -200,6 +201,7 @@ void TesterWidget::stopTest()
     testCombo->setEnabled(true);
     seqCombo->setEnabled(true);
     startPushButton->setEnabled(true);
+    saveBuffer(cotSendData,cotRecvData);
 }
 
 void TesterWidget::rtaDataReceive(QByteArray data)
@@ -215,15 +217,26 @@ void TesterWidget::cotDataReceive(QByteArray data)
 long int TesterWidget::compareData(QByteArray &send, QByteArray &recv, int *first_err_byte_num){
     long int cnt_err=0;
     int num = recv.size()<send.size()? recv.size():send.size();
-    int first_err=0;
-    while (num--){
+    int first_err=-1;
+    for(int b=0; b<num; b++){
         for (int i=0; i<8;i++){
-           if (((send[num]>>i)&0x01) != ((recv[num]>>i)&0x01)) {
+           if (((send[b]>>i)&0x01) != ((recv[b]>>i)&0x01)) {
                cnt_err++;
-               if(first_err==0) first_err=num;
+               if(first_err<0) first_err=b;
            }
         }
     }
     if (first_err_byte_num!=NULL) *first_err_byte_num=first_err;
     return cnt_err;
+}
+
+void TesterWidget::saveBuffer(QByteArray &dataIn, QByteArray &dataOut){
+    QFile fileIn("./buff_in");
+    QFile fileOut("./buff_out");
+    fileIn.open(QIODevice::WriteOnly);
+    fileOut.open(QIODevice::WriteOnly);
+    fileIn.write(dataIn);
+    fileOut.write(dataOut);
+    fileIn.close();
+    fileOut.close();
 }

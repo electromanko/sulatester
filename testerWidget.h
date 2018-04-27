@@ -35,6 +35,7 @@ private:
     void startTest(int testNum);
     void recvTest(int num, QByteArray data);
     long int compareData(QByteArray &send, QByteArray &recv, int *first_err_byte_num);
+    void saveBuffer(QByteArray &dataIn, QByteArray &dataOut);
 
 signals:
     void rtaDataSend(QByteArray data);
