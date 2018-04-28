@@ -17,12 +17,16 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *cotLayout = new QVBoxLayout();
     QGroupBox *rtaGroupBox = new QGroupBox(tr("RTA"));
     QVBoxLayout *rtaLayout = new QVBoxLayout();
+    QGroupBox *depthGroupBox = new QGroupBox(tr("Depth"));
+    QVBoxLayout *depthLayout = new QVBoxLayout();
 
     CotConnectionWidget = new ConnectionWidget("192.168.0.13",8899);
     RtaConnectionWidget = new ConnectionWidget("192.168.0.14",8899);
 
     ModemConnectionWidget = new ConfigConnectionWidget();
     testerWidget = new TesterWidget();
+    depthWidget = new DepthWidget();
+
     // Loop
     connect(RtaConnectionWidget,SIGNAL(dataReceive(QByteArray)),
             RtaConnectionWidget,SLOT(dataSend(QByteArray)));
@@ -48,10 +52,15 @@ MainWindow::MainWindow(QWidget *parent)
     rtaLayout->setSpacing(0);
     rtaLayout->setMargin(0);
     rtaGroupBox->setLayout(rtaLayout);
+    depthLayout->addWidget(depthWidget);
+    depthLayout->setSpacing(0);
+    depthLayout->setMargin(0);
+    depthGroupBox->setLayout(depthLayout);
 
     vLayout->addWidget(cotGroupBox);
     vLayout->addWidget(rtaGroupBox);
     vLayout->addWidget(ModemConnectionWidget);
+    vLayout->addWidget(depthGroupBox);
     /*vLayout->addWidget(CotConnectionWidget);
     vLayout->addWidget(RtaConnectionWidget);*/
     //vLayout->addStretch();

@@ -4,10 +4,11 @@
 #include <QIntValidator>
 #include <QNetworkProxy>
 #include <QNetworkInterface>
+#include <QMessageBox>
+#include <QLabel>
 
 DepthWidget::DepthWidget(QWidget *parent) : QWidget(parent)
 {
-    isConnected=false;
     ipAddrLineEdit = new QLineEdit();
     ipAddrLineEdit->setMaxLength(16);
     ipAddrLineEdit->setMaximumWidth(100);
@@ -22,7 +23,14 @@ DepthWidget::DepthWidget(QWidget *parent) : QWidget(parent)
     disconnectPushButton = connectButtonBox->addButton(tr("&Disconnect"), QDialogButtonBox::RejectRole);
     connectPushButton->setEnabled(true);
     disconnectPushButton->setEnabled(false);
+    shkpLineEdit = new  QLineEdit();
+    shkmLineEdit = new  QLineEdit();
+    magnetmLineEdit = new  QLineEdit();
+    shkpLineEdit->setReadOnly(true);
+    shkmLineEdit->setReadOnly(true);
+    magnetmLineEdit->setReadOnly(true);
 
+    depthResetPushButton = new QPushButton(tr("&Reset"));
     QVBoxLayout *mainLayout = new QVBoxLayout;
     QHBoxLayout *hLayout = new QHBoxLayout;
     hLayout->addWidget(ipAddrLineEdit);
@@ -32,6 +40,20 @@ DepthWidget::DepthWidget(QWidget *parent) : QWidget(parent)
     //mainLayout->addWidget(disconnectPushButton, 2,1);
     mainLayout->addLayout(hLayout);
     mainLayout->addWidget(connectButtonBox);
+
+    mainLayout->addWidget(new QLabel(tr("SHK+ :")));
+    mainLayout->addWidget(shkpLineEdit);
+    mainLayout->addWidget(new QLabel(tr("SHK- :")));
+    mainLayout->addWidget(shkmLineEdit);
+    mainLayout->addWidget(new QLabel(tr("MagnetMark:")));
+    mainLayout->addWidget(magnetmLineEdit);
+
+    mainLayout->addWidget(depthResetPushButton);
+    //QHBoxLayout *hLayout2 = new QHBoxLayout;
+    //hLayout2->addWidget(depthLineEdit);
+    //hLayout2->addWidget(depthResetPushButton);
+
+    //mainLayout->addLayout(hLayout2);
     //mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
     setLayout(mainLayout);
@@ -48,8 +70,16 @@ DepthWidget::DepthWidget(QWidget *parent) : QWidget(parent)
     connect(connectButtonBox, SIGNAL(accepted()), this, SLOT(pushConnect()));
     connect(connectButtonBox, SIGNAL(rejected()), this, SLOT(pushDisconnect()));
 
-
+    updateTimer = new QTimer(this);
+    connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateDepth()));
+    updateTimer->start(1000);
 }
+
+bool DepthWidget::isConnected()
+{
+    return (tcpSocket->state() == QAbstractSocket::ConnectedState);
+}
+
 
 void DepthWidget::pushConnect()
 {
@@ -67,7 +97,6 @@ void DepthWidget::pushDisconnect()
 
 void DepthWidget::tcpConnect()
 {
-    isConnected=true;
     connectPushButton->setEnabled(false);
     disconnectPushButton->setEnabled(true);
     ipAddrLineEdit->setEnabled(false);
@@ -76,7 +105,6 @@ void DepthWidget::tcpConnect()
 
 void DepthWidget::tcpDisconnect()
 {
-    isConnected=false;
     connectPushButton->setEnabled(true);
     disconnectPushButton->setEnabled(false);
     ipAddrLineEdit->setEnabled(true);
@@ -90,6 +118,58 @@ void DepthWidget::readTcpData()
 
 void DepthWidget::tcpError(QAbstractSocket::SocketError error)
 {
-
+    connectPushButton->setEnabled(true);
+    disconnectPushButton->setEnabled(false);
+    ipAddrLineEdit->setEnabled(true);
+    portLineEdit->setEnabled(true);
+    tcpSocket->disconnectFromHost();
+    QMessageBox::information(this,  tr("Tcp SocketError"), ipAddrLineEdit->text()
+                             +QString(" : ")+portLineEdit->text()+QString("\n")+tcpSocket->errorString());
 }
+
+void DepthWidget::updateDepth()
+{
+    if (isConnected()){
+        shkpLineEdit->setText(QString::number(getShkp()));
+        shkmLineEdit->setText(QString::number(getShkm()));
+        magnetmLineEdit->setText(QString::number(getMagnetMark()));
+    }
+}
+
+QByteArray DepthWidget::getDepthData(cuart_cmd_t cmd, int size)
+{
+    char dataSend;
+    QByteArray buf;
+
+    dataSend=cmd;
+    tcpSocket->write(&dataSend,1); //write the data itself
+    tcpSocket->waitForBytesWritten();
+    while ((buf.size()<size) && tcpSocket->waitForReadyRead(1000)){
+        buf = tcpSocket->readAll();
+    }
+    if (buf.size()==size) return buf;
+    else return NULL;
+}
+
+int DepthWidget::getShkp()
+{
+    QByteArray recv = getDepthData(CMD_GET_SHK_P, 4);
+    if (recv.size()==4) return (recv[0] | recv[1]<<8 | recv[2]<<16 | recv[3]<<24);
+    else return -1;
+}
+
+int DepthWidget::getShkm()
+{
+    QByteArray recv = getDepthData(CMD_GET_SHK_M, 4);
+    if (recv.size()==4) return recv[0] | recv[1]<<8 | recv[2]<<16 | recv[3]<<24;
+    else return -1;
+}
+
+int DepthWidget::getMagnetMark()
+{
+    QByteArray recv = getDepthData(CMD_GET_MAGNETM, 4);
+    if (recv.size()==4) return recv[0] | recv[1]<<8 | recv[2]<<16 | recv[3]<<24;
+    else return -1;
+}
+
 

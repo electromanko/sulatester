@@ -3,6 +3,7 @@
 
 #include "configConnectionWidget.h"
 #include "connection_widget.h"
+#include "depthWidget.h"
 
 #include <QMainWindow>
 #include <QMenu>
@@ -22,6 +23,7 @@ private:
     ConnectionWidget *CotConnectionWidget;
     ConnectionWidget *RtaConnectionWidget;
     ConfigConnectionWidget  *ModemConnectionWidget;
+    DepthWidget *depthWidget;
     QWidget *testerWidget;
 
     QMenu *fileMenu;
